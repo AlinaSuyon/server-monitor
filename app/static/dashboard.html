@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>✨ Server Monitor ✨</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Trebuchet MS', sans-serif;
+    background: linear-gradient(135deg, #ffd1ec 0%, #c8a2f0 50%, #8ec5ff 100%);
+    min-height: 100vh;
+    padding: 30px;
+    box-sizing: border-box;
+  }
+  h1 {
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 2px 2px 0 #d67ab1, 4px 4px 8px rgba(0,0,0,0.2);
+    font-size: 2.5em;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #6b3fa0;
+    margin-bottom: 30px;
+    font-style: italic;
+  }
+  .cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+  .card {
+    background: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 20px 30px;
+    box-shadow: 0 8px 20px rgba(160,100,200,0.3);
+    text-align: center;
+    min-width: 150px;
+    border: 3px solid #ffb6e6;
+  }
+  .card .icon { font-size: 2em; }
+  .card .value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #8b3fbf;
+  }
+  .card .label {
+    color: #a266cc;
+    font-size: 0.9em;
+  }
+  .chart-container {
+    background: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 20px;
+    max-width: 900px;
+    height: 400px;
+    margin: 0 auto 25px;
+    box-shadow: 0 8px 20px rgba(160,100,200,0.3);
+    border: 3px solid #b6d6ff;
+    box-sizing: border-box;
+}
+</style>
+</head>
+<body>
+
+<h1>🌙 Server Monitor ✨</h1>
+<p class="subtitle">В ИМЯ ЛУНЫ, Я СЛЕЖУ ЗА ТВОИМ СЕРВЕРОМ!</p>
+
+<div class="cards">
+  <div class="card"><div class="icon">💫</div><div class="value" id="cpu-val">--%</div><div class="label">CPU</div></div>
+  <div class="card"><div class="icon">🌸</div><div class="value" id="mem-val">--%</div><div class="label">RAM</div></div>
+  <div class="card"><div class="icon">💎</div><div class="value" id="disk-val">--%</div><div class="label">Диск</div></div>
+</div>
+
+<div class="chart-container">
+  <canvas id="mainChart"></canvas>
+</div>
+
+<script>
+const ctx = document.getElementById('mainChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      { label: 'CPU %', data: [], borderColor: '#ff6fae', backgroundColor: 'rgba(255,111,174,0.15)', tension: 0.4, fill: true },
+      { label: 'RAM %', data: [], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)', tension: 0.4, fill: true },
+      { label: 'Disk %', data: [], borderColor: '#5cb8ff', backgroundColor: 'rgba(92,184,255,0.15)', tension: 0.4, fill: true }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false, 
+    scales: { y: { min: 0, max: 100 } }
+  }
+});
+
+async function updateDashboard() {
+  const res = await fetch('/metrics');
+  const data = await res.json();
+
+  document.getElementById('cpu-val').textContent = data.cpu.percent + '%';
+  document.getElementById('mem-val').textContent = data.memory.percent + '%';
+  document.getElementById('disk-val').textContent = data.disk.percent + '%';
+
+  const now = new Date().toLocaleTimeString();
+  chart.data.labels.push(now);
+  chart.data.datasets[0].data.push(data.cpu.percent);
+  chart.data.datasets[1].data.push(data.memory.percent);
+  chart.data.datasets[2].data.push(data.disk.percent);
+
+  if (chart.data.labels.length > 20) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach(ds => ds.data.shift());
+  }
+  chart.update();
+}
+
+updateDashboard();
+setInterval(updateDashboard, 5000);
+</script>
+
+</body>
+</html>

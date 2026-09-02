@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.metrics import get_metrics
 from app.database import init_db
 from app.scheduler import start_scheduler
@@ -14,6 +16,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Server Monitor", lifespan=lifespan)
 
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 @app.get("/health")
 def health():
@@ -23,3 +27,8 @@ def health():
 @app.get("/metrics")
 def metrics():
     return get_metrics()
+
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse("app/static/dashboard.html")
