@@ -1,8 +1,18 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.metrics import get_metrics
+from app.database import init_db
+from app.scheduler import start_scheduler
 
 
-app = FastAPI(title="Server Monitor")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    start_scheduler()
+    yield
+
+
+app = FastAPI(title="Server Monitor", lifespan=lifespan)
 
 
 @app.get("/health")

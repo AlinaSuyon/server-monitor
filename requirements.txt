@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 psutil
+sqlalchemy
+apscheduler
